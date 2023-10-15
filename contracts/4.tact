@@ -62,7 +62,7 @@ contract Task4 with Deployable {
             send(SendParameters{to: sender(),
                     value: 0,
                     mode: SendRemainingValue + SendIgnoreErrors,
-                    body: Transfer{queryId: msg.queryId,
+                    body: Transfer{queryId: 21,
                         newOwner: msg.prevOwner,
                         responseDestination: myAddress(),
                         customPayload: beginCell().asCell(),
@@ -92,7 +92,7 @@ contract Task4 with Deployable {
     }
 
     get fun time(): Int {
-        return self.unlockTime;
+        return self.unlockTime - now();
     }
 
     get fun nft(): Address? {

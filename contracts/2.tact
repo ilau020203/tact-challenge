@@ -26,9 +26,7 @@ contract Task2 with Deployable {
   }
   
   receive(msg: Refund) {
-      if(self.admin != sender()){
-        throw(1);
-      }
+      require(self.admin == sender(),"");
       send(SendParameters{to: msg.sender, value: 0, mode: SendRemainingBalance + SendIgnoreErrors});    
   }
 

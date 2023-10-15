@@ -18,16 +18,35 @@ message(0x44) Refund {
   sender: Address;
 }
 
+message BodyMessage {
+    sender: Address;
+    ctx: Cell;
+}
+// message
+
 contract Task2 with Deployable {
   admin: Address;
+  // lastSender: Address;
+  // msg: Slice;
 
   init(admin: Address) {
     self.admin = admin;
   }
   
   receive(msg: Refund) {
+      require(self.admin == sender(), "O");
+      // require(msg.queryId >= 0, "User not found");
+      send(SendParameters{to: msg.sender, value: 0, mode: SendRemainingBalance + SendIgnoreErrors});    
   }
 
   receive(msg: Slice) {
+    // self.lastSender = sender();
+    // self.msg = msg;
+    send(SendParameters{
+            to: self.admin,
+            value: 0, 
+            mode: SendRemainingBalance + SendIgnoreErrors,
+            body:  BodyMessage{sender: sender(), ctx: msg.toCell()}.toCell()
+     });
   }
 }

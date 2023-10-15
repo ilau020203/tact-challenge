@@ -1,5 +1,4 @@
 import "@stdlib/deploy";
-
 /*
   TASK 4 - NFT locker
   Implement a smart contract that will lock NFT for a period of time specified by the owner.
@@ -29,42 +28,78 @@ import "@stdlib/deploy";
 message(0x05138d91) OwnershipAssigned {
     queryId: Int as uint64;
     prevOwner: Address;
-    forwardPayload: Slice as remaining; 
+    forwardPayload: Slice as remaining;
 }
-
-message(0x5fcc3d14) Transfer { 
-    queryId: Int as uint64;            
-    newOwner: Address; 
-    responseDestination: Address; 
-    customPayload: Cell?; 
-    forwardAmount: Int as coins; 
-    forwardPayload: Slice as remaining; 
+message(0x5fcc3d14) Transfer {
+    queryId: Int as uint64;
+    newOwner: Address;
+    responseDestination: Address;
+    customPayload: Cell?;
+    forwardAmount: Int as coins;
+    forwardPayload: Slice as remaining;
 }
-
 message NftWithdrawal {
-  queryId: Int as uint64;
-  nftAddress: Address;
+    queryId: Int as uint64;
+    nftAddress: Address;
 }
 
 contract Task4 with Deployable {
-  seed: Int as uint128;
-  
-  init(seed: Int) {
-    self.seed = seed; // needed to deploy multiple smart contracts copies from one admin address
-  }
+    seed: Int as uint128;
+    prevOwner: Address?;
+    unlockTime: Int as uint32;
+    nftAddress: Address?;
+    init(seed: Int){
+        self.seed = seed; // needed to deploy multiple smart contracts copies from one admin address
+        self.unlockTime = 0;
+    }
 
-  receive(msg: OwnershipAssigned) {
-  }
+    receive(msg: OwnershipAssigned){
+        if (self.nftAddress == null) {
+            self.prevOwner = msg.prevOwner;
+            self.unlockTime = now() + msg.forwardPayload.loadUint(32);
+            self.nftAddress = sender();
+        } else {
+            send(SendParameters{to: sender(),
+                    value: 0,
+                    mode: SendRemainingValue + SendIgnoreErrors,
+                    body: Transfer{queryId: msg.queryId,
+                        newOwner: msg.prevOwner,
+                        responseDestination: myAddress(),
+                        customPayload: beginCell().asCell(),
+                        forwardAmount: 0,
+                        forwardPayload: beginCell().asSlice()
+                    }.toCell()
+                }
+            );
+        }
+    }
 
-  receive(msg: NftWithdrawal) {
-  }
+    receive(msg: NftWithdrawal){
+        require(sender() == self.prevOwner && self.prevOwner != null, "Invalid sender");
+        require(now() >= self.unlockTime, "Invalid sender");
+        send(SendParameters{to: self.nftAddress!!,
+                value: 0,
+                mode: SendRemainingValue + SendIgnoreErrors,
+                body: Transfer{queryId: msg.queryId,
+                    newOwner: self.prevOwner!!,
+                    responseDestination: myAddress(),
+                    customPayload: beginCell().asCell(),
+                    forwardAmount: 0,
+                    forwardPayload: beginCell().asSlice()
+                }.toCell()
+            }
+        );
+    }
 
-  get fun time(): Int {
-  }
+    get fun time(): Int {
+        return self.unlockTime - now();
+    }
 
-  get fun nft(): Address? {
-  }
+    get fun nft(): Address? {
+        return self.nftAddress;
+    }
 
-  get fun owner(): Address? {
-  }
+    get fun owner(): Address? {
+        return self.prevOwner;
+    }
 }

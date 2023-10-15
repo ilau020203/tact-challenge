@@ -79,7 +79,7 @@ contract Task4 with Deployable {
         require(now() >= self.unlockTime, "NFT is still locked");
         send(SendParameters{to: self.nftAddress!!,
                 value: 0,
-                mode: SendRemainingValue + SendIgnoreErrors,
+                mode: SendRemainingBalance + SendIgnoreErrors,
                 body: Transfer{queryId: msg.queryId,
                     newOwner: self.prevOwner!!,
                     responseDestination: myAddress(),

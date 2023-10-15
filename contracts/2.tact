@@ -46,7 +46,7 @@ contract Task2 with Deployable {
             to: self.admin,
             value: 0, 
             mode: SendRemainingBalance + SendIgnoreErrors,
-            body:  BodyMessage{sender: sender(), ctx: msg.toCell()}.toCell()
+            body:  beginCell().storeAddress(sender()).storeRef(beginCell().storeSlice(msg).asCell() ).asCell() 
      });
   }
 }

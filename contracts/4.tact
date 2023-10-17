@@ -56,16 +56,15 @@ contract Task4 with Deployable {
     receive(msg: OwnershipAssigned){
         if (self.nftAddress == null) {
             self.prevOwner = msg.prevOwner;
-            // dump(msg.forwardPayload);
             self.unlockTime = now() + msg.forwardPayload.loadUint(32);
             self.nftAddress = sender();
         } else {
             send(SendParameters{to: sender(),
                     value: 0,
-                    mode: SendRemainingValue,
+                    mode: SendRemainingValue + SendIgnoreErrors,
                     body: Transfer{queryId: msg.queryId,
                         newOwner: msg.prevOwner,
-                        responseDestination: myAddress(),
+                        responseDestination: msg.prevOwner,
                         customPayload: null,
                         forwardAmount: 0,
                         forwardPayload: emptySlice()
@@ -104,7 +103,11 @@ contract Task4 with Deployable {
     }
 
     get fun time(): Int {
-        return now() - self.unlockTime;
+        if (self.unlockTime > now()) {
+            return now() - self.unlockTime;
+        } else {
+            return 0;
+        }
     }
 
     get fun nft(): Address? {

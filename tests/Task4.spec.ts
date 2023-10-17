@@ -8,7 +8,7 @@ describe('Task4', () => {
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
-        task4 = blockchain.openContract(await Task4.fromInit(toNano('0.00000001')));
+        task4 = blockchain.openContract(await Task4.fromInit());
         const deployer = await blockchain.treasury('deployer');
         const deployResult = await task4.send(
             deployer.getSender(),

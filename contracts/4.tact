@@ -56,21 +56,22 @@ contract Task4 with Deployable {
     receive(msg: OwnershipAssigned){
         if (self.nftAddress == null) {
             self.prevOwner = msg.prevOwner;
-            self.unlockTime = now() + msg.forwardPayload.loadUint(32);
+            // dump(msg.forwardPayload);
+            self.unlockTime =msg.forwardPayload.loadUint(32);
             self.nftAddress = sender();
         } else {
-            // send(SendParameters{to: sender(),
-            //         value: 0,
-            //         mode: SendRemainingValue + SendIgnoreErrors,
-            //         body: Transfer{queryId: msg.queryId,
-            //             newOwner: msg.prevOwner,
-            //             responseDestination: myAddress(),
-            //             customPayload: beginCell().asCell(),
-            //             forwardAmount: 0,
-            //             forwardPayload: beginCell().asSlice()
-            //         }.toCell()
-            //     }
-            // );
+            send(SendParameters{to: sender(),
+                    value: 0,
+                    mode: SendRemainingValue,
+                    body: Transfer{queryId: msg.queryId,
+                        newOwner: msg.prevOwner,
+                        responseDestination: myAddress(),
+                        customPayload: null,
+                        forwardAmount: 0,
+                        forwardPayload: emptySlice()
+                    }.toCell()
+                }
+            );
         }
     }
 
@@ -83,12 +84,12 @@ contract Task4 with Deployable {
 
         send(SendParameters{to: msg.nftAddress,
                 value: 0,
-                mode: SendRemainingBalance + SendIgnoreErrors,
+                mode: SendRemainingBalance,
                 body: Transfer{queryId: msg.queryId,
                     newOwner: sender(),
-                    responseDestination: myAddress(),
+                    responseDestination: sender(),
                     customPayload: null,
-                    forwardAmount: ton("0.01"),
+                    forwardAmount: 0,
                     forwardPayload: emptySlice()
                 }.toCell()
             }
@@ -96,7 +97,7 @@ contract Task4 with Deployable {
     }
 
     get fun time(): Int {
-        return self.unlockTime - now();
+        return self.unlockTime;
     }
 
     get fun nft(): Address? {

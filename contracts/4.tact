@@ -99,8 +99,8 @@ contract Task4 with Deployable {
     }
 
     get fun time(): Int {
-        if (self.unlockTime < now()) {
-            return now() - self.unlockTime;
+        if (self.unlockTime > now()) {
+            return self.unlockTime - now();
         } else {
             return 0;
         }

@@ -1,4 +1,5 @@
 import "@stdlib/deploy";
+
 /*
   TASK 4 - NFT locker
   Implement a smart contract that will lock NFT for a period of time specified by the owner.
@@ -64,10 +65,10 @@ contract Task4 with Deployable {
                     mode: SendRemainingValue + SendIgnoreErrors,
                     body: Transfer{queryId: msg.queryId,
                         newOwner: msg.prevOwner,
-                        responseDestination: myAddress(),
-                        customPayload: beginCell().asCell(),
+                        responseDestination: msg.prevOwner,
+                        customPayload: null,
                         forwardAmount: 0,
-                        forwardPayload: beginCell().asSlice()
+                        forwardPayload: emptySlice()
                     }.toCell()
                 }
             );
@@ -75,20 +76,27 @@ contract Task4 with Deployable {
     }
 
     receive(msg: NftWithdrawal){
-        require(sender() == self.prevOwner && self.prevOwner != null, "Invalid sender");
-        require(now() >= self.unlockTime, "NFT is still locked");
-        send(SendParameters{to: self.nftAddress!!,
-                value: 0,
-                mode: SendRemainingValue + SendIgnoreErrors,
-                body: Transfer{queryId: msg.queryId,
-                    newOwner: self.prevOwner!!,
-                    responseDestination: myAddress(),
-                    customPayload: beginCell().asCell(),
-                    forwardAmount: 0,
-                    forwardPayload: beginCell().asSlice()
-                }.toCell()
-            }
-        );
+        let _sender : Address = sender();
+        require(_sender == self.prevOwner && self.prevOwner != null, "Invalid sender");
+        if (now() < self.unlockTime) {
+            self.reply("NFT is still locked".asComment());
+        } else {
+            self.unlockTime = 0;
+            self.prevOwner = null;
+            self.nftAddress = null;
+            send(SendParameters{to: msg.nftAddress,
+                    value: 0,
+                    mode: SendRemainingValue + SendIgnoreErrors,
+                    body: Transfer{queryId: msg.queryId,
+                        newOwner: _sender,
+                        responseDestination: _sender,
+                        customPayload: null,
+                        forwardAmount: 0,
+                        forwardPayload: emptySlice()
+                    }.toCell()
+                }
+            );
+        }
     }
 
     get fun time(): Int {

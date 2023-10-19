@@ -66,12 +66,12 @@ contract Task3 with Deployable {
     self.decimal = 1000000000;
   }
 
-  receive(msg: TokenNotification) {
-  } 
+//   receive(msg: TokenNotification) {
+//   } 
   
-  get fun price(jetton: Address): Int { 
-  }
+//   get fun price(jetton: Address): Int { 
+//   }
   
-  get fun balance(jetton: Address): Int { 
-  }
+//   get fun balance(jetton: Address): Int { 
+//   }
 }

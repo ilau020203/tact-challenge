@@ -100,8 +100,10 @@ contract Task3 with Deployable {
             );
             return ;
         }
+
         let amountOfAJettonToSend: Int =
             amountOfJettonAOnContract * self.decimal / amountOfJettonBOnContract * msg.amount / self.decimal;
+        
         if (amountOfJettonAOnContract < amountOfAJettonToSend) {
             send(SendParameters{to: _sender,
                     value: 0,
@@ -119,8 +121,10 @@ contract Task3 with Deployable {
             );
             return ;
         }
+
         amountOfJettonBOnContract = amountOfJettonBOnContract + msg.amount;
         amountOfJettonAOnContract = amountOfJettonAOnContract - amountOfAJettonToSend;
+        
         if (senderIsTokenA) {
             self.bAmount = amountOfJettonAOnContract;
             self.aAmount = amountOfJettonBOnContract;

@@ -67,6 +67,8 @@ message(0x5fcc3d14) Transfer {
 contract Task5 with Deployable {
   seed: Int as uint128;
   owner: Address;
+  nfts: map<Int as uint16, Address>;
+  countNFT: Int as uint16 = 0;
   
   init(seed: Int, owner: Address) {
     self.owner = owner;
@@ -74,17 +76,36 @@ contract Task5 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
+    let _context:Context = context();
+
+    if (msg.prevOwner == self.owner ){
+      nfts.set(countNFT, _context.sender);
+      countNFT = countNFT + 1;
+        
+    } else {
+
+    }
   }
 
   receive(msg: AdminWithdrawalProfit) {
+    let _sender: Address = sender();
+    require(_sender == self.owner, "Invalid sender");
+    send(SendParameters{to: sender(),
+              value: 0,
+              mode: SendRemainingBalance,
+              body: AdminFetchProfit{queryId: msg.queryId}.toCell()
+          }
+    ); 
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
   }
 
   get fun profit(): Int { 
+    return myBalance();
   }
   
   get fun nfts(): map<Int as uint16, Address> { 
+    return nfts;
   }
 }

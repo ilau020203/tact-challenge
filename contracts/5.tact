@@ -69,6 +69,7 @@ contract Task5 with Deployable {
   owner: Address;
   nfts: map<Int as uint16, Address>;
   count: Int as uint16 = 0;
+  countAction: Int as uint16 = 0;
 
   init(seed: Int, owner: Address) {
     self.owner = owner;
@@ -106,7 +107,7 @@ contract Task5 with Deployable {
             let idx: Int = randomInt() % (self.count + 1);
             send(SendParameters{
                     to: self.nfts.get(idx)!!,
-                    value: ctx.value-ton("2.1"),
+                    value: myBalance() -  self.countAction*ton("2"),
                     body: Transfer{
                     queryId: msg.queryId,
                     newOwner: msg.prevOwner,
@@ -115,7 +116,7 @@ contract Task5 with Deployable {
                     forwardAmount: 0,
                     forwardPayload: emptySlice()
                     }.toCell(),
-                    mode: SendRemainingValue
+                    mode: 0
             });
 
             self.nfts.set(idx, nft);
@@ -125,6 +126,7 @@ contract Task5 with Deployable {
     receive(msg: AdminWithdrawalProfit){
         require(sender() == self.owner, "");
         let ctx: Context = context();
+        self.countAction = 0;
         send(SendParameters{ 
           to: sender(),
               value: 0,                    
@@ -160,7 +162,7 @@ contract Task5 with Deployable {
     }
 
     get fun profit(): Int {
-        return myBalance();
+        return self.countAction*ton("2.0");
     }
 
     get fun nfts(): map<Int as uint16, Address> {

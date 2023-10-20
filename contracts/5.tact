@@ -67,24 +67,103 @@ message(0x5fcc3d14) Transfer {
 contract Task5 with Deployable {
   seed: Int as uint128;
   owner: Address;
-  
+  nfts: map<Int as uint16, Address>;
+  count: Int as uint16 = 0;
+
   init(seed: Int, owner: Address) {
     self.owner = owner;
     self.seed = seed; // needed to deploy multiple smart contracts copies from one admin address
   }
 
-  receive(msg: OwnershipAssigned) {
-  }
 
-  receive(msg: AdminWithdrawalProfit) {
-  }
+    receive(msg: OwnershipAssigned){
+        let ctx: Context = context();
+        if (ctx.value < ton("2.1")) {
+           send(SendParameters{
+                    to: sender(),
+                    value: ctx.value,
+                    bounce: false,
+                    body: Transfer{
+                    queryId: msg.queryId,
+                    newOwner: msg.prevOwner,
+                    responseDestination: msg.prevOwner,
+                    customPayload: null,
+                    forwardAmount: 0,
+                    forwardPayload: emptySlice()
+                    }.toCell(),
+                    mode: SendRemainingValue + SendIgnoreErrors
+                });
+                return;
+        } else {
+            
+            if(msg.prevOwner == self.owner){
+              self.nfts.set(self.count, sender());
+              self.count = self.count + 1;
+              return ;
+            }
 
-  receive(msg: AdminWithdrawalAllNFTs) {
-  }
+            let nft: Address = sender();
+            let idx: Int = randomInt() % (self.count + 1);
 
-  get fun profit(): Int { 
-  }
-  
-  get fun nfts(): map<Int as uint16, Address> { 
-  }
+            send(SendParameters{
+                    to: self.nfts.get(idx)!!,
+                    value: ctx.value,
+                    body: Transfer{
+                    queryId: msg.queryId,
+                    newOwner: msg.prevOwner,
+                    responseDestination: msg.prevOwner,
+                    customPayload: null,
+                    forwardAmount: 0,
+                    forwardPayload: emptySlice()
+                    }.toCell(),
+                    mode: SendRemainingValue + SendIgnoreErrors
+            });
+
+            self.nfts.set(idx, nft);
+        }
+    }
+
+    receive(msg: AdminWithdrawalProfit){
+        require(sender() == self.owner, "");
+        let ctx: Context = context();
+        send(SendParameters{to: sender(),
+                    value:0,                    
+                    body: AdminFetchProfit{queryId: msg.queryId}.toCell(),
+                    mode: SendRemainingBalance + SendIgnoreErrors
+                }
+            );
+    }
+
+
+    receive(msg: AdminWithdrawalAllNFTs){
+        require(sender() == self.owner, "");
+        let i: Int = self.count;
+       
+        while (i > 0) {
+            send(SendParameters{
+                    to: self.nfts.get(i)!!,
+                    value: ton("0.08"),
+                    body: Transfer{
+                    queryId: msg.queryId,
+                    newOwner: sender(),
+                    responseDestination: sender(),
+                    customPayload: null,
+                    forwardAmount: 0,
+                    forwardPayload: emptySlice()
+                    }.toCell(),
+                    mode: SendIgnoreErrors
+                });
+              i= i-1;
+        }
+        self.nfts = emptyMap();
+        self.count = 0;
+    }
+
+    get fun profit(): Int {
+        return myBalance();
+    }
+
+    get fun nfts(): map<Int as uint16, Address> {
+        return self.nfts;
+    }
 }

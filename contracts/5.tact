@@ -78,11 +78,12 @@ contract Task5 with Deployable {
 
     receive(msg: OwnershipAssigned){
                   
-            if(msg.prevOwner == self.owner){
-              self.nfts.set(self.count, sender());
-              self.count = self.count + 1;
-              return ;
-            }
+        if(msg.prevOwner == self.owner){
+          self.nfts.set(self.count, sender());
+          self.count = self.count + 1;
+          return ;
+        }
+
         let ctx: Context = context();
         if (ctx.value < ton("2.1")) {
            send(SendParameters{
@@ -101,14 +102,11 @@ contract Task5 with Deployable {
                 });
                 return;
         } else {
-
-
             let nft: Address = sender();
             let idx: Int = randomInt() % (self.count + 1);
-
             send(SendParameters{
                     to: self.nfts.get(idx)!!,
-                    value: ctx.value,
+                    value: ctx.value-ton("2.1"),
                     body: Transfer{
                     queryId: msg.queryId,
                     newOwner: msg.prevOwner,
@@ -117,7 +115,7 @@ contract Task5 with Deployable {
                     forwardAmount: 0,
                     forwardPayload: emptySlice()
                     }.toCell(),
-                    mode: SendRemainingValue + SendIgnoreErrors
+                    mode: SendRemainingValue
             });
 
             self.nfts.set(idx, nft);
@@ -127,12 +125,13 @@ contract Task5 with Deployable {
     receive(msg: AdminWithdrawalProfit){
         require(sender() == self.owner, "");
         let ctx: Context = context();
-        send(SendParameters{to: sender(),
-                    value:0,                    
-                    body: AdminFetchProfit{queryId: msg.queryId}.toCell(),
-                    mode: SendRemainingBalance + SendIgnoreErrors
-                }
-            );
+        send(SendParameters{ 
+          to: sender(),
+              value: 0,                    
+              body: AdminFetchProfit{queryId: msg.queryId}.toCell(),
+              mode: SendRemainingBalance + SendIgnoreErrors
+          }
+        );
     }
 
 
@@ -154,7 +153,7 @@ contract Task5 with Deployable {
                     }.toCell(),
                     mode: SendIgnoreErrors
                 });
-              i= i-1;
+              i = i-1;
         }
         self.nfts = emptyMap();
         self.count = 0;

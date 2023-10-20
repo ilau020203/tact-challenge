@@ -98,7 +98,7 @@ contract Task5 with Deployable {
                     forwardAmount: 0,
                     forwardPayload: emptySlice()
                     }.toCell(),
-                    mode: SendRemainingValue + SendIgnoreErrors
+                    mode: SendRemainingValue
                 });
                 return;
         } else {
@@ -115,7 +115,7 @@ contract Task5 with Deployable {
                     forwardAmount: 0,
                     forwardPayload: emptySlice()
                     }.toCell(),
-                    mode: SendPayGasSeparately
+                    mode: SendRemainingValue
             });
 
             self.nfts.set(idx, nft);
@@ -129,7 +129,7 @@ contract Task5 with Deployable {
           to: sender(),
               value: 0,                    
               body: AdminFetchProfit{queryId: msg.queryId}.toCell(),
-              mode: SendRemainingBalance + SendIgnoreErrors
+              mode: SendRemainingBalance
           }
         );
     }
@@ -151,7 +151,7 @@ contract Task5 with Deployable {
                     forwardAmount: 0,
                     forwardPayload: emptySlice()
                     }.toCell(),
-                    mode: SendIgnoreErrors
+                    mode: 0
                 });
               i = i-1;
         }

@@ -77,6 +77,12 @@ contract Task5 with Deployable {
 
 
     receive(msg: OwnershipAssigned){
+                  
+            if(msg.prevOwner == self.owner){
+              self.nfts.set(self.count, sender());
+              self.count = self.count + 1;
+              return ;
+            }
         let ctx: Context = context();
         if (ctx.value < ton("2.1")) {
            send(SendParameters{
@@ -95,12 +101,7 @@ contract Task5 with Deployable {
                 });
                 return;
         } else {
-            
-            if(msg.prevOwner == self.owner){
-              self.nfts.set(self.count, sender());
-              self.count = self.count + 1;
-              return ;
-            }
+
 
             let nft: Address = sender();
             let idx: Int = randomInt() % (self.count + 1);

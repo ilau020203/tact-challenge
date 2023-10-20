@@ -1,4 +1,5 @@
 import "@stdlib/deploy";
+
 /*
   TASK 3 - DEX
   Create a simple jetton dex contract that trades one pair of jettons: A and B.
@@ -64,7 +65,7 @@ contract Task3 with Deployable {
     }
 
     receive(msg: TokenNotification){
-        let isA :Bool = self.jettonAddressA == sender();
+        let isA: Bool = self.jettonAddressA == sender();
         require(isA || self.jettonAddressB == sender(), "");
         let jettonAddressA: Address = self.jettonAddressA;
         let amountOfBoughtToken: Int = self.aAmount;
@@ -76,49 +77,24 @@ contract Task3 with Deployable {
         }
         if (self.owner == msg.from) {
             amountOfSoldToken = amountOfSoldToken + msg.amount;
-        } else {
-            let amountOfAJettonToSend: Int =
-                amountOfBoughtToken * self.decimal / amountOfSoldToken * msg.amount / self.decimal;
-            if (amountOfBoughtToken == 0 || amountOfSoldToken == 0) {
-                send(SendParameters{to: sender(),
-                        value: 0,
-                        bounce: false,
-                        mode: SendRemainingValue,
-                        body: TokenTransfer{queryId: 0,
-                            amount: msg.amount,
-                            destination: msg.from,
-                            responseDestination: myAddress(),
-                            customPayload: null,
-                            forwardTonAmount: ton("0.01"),
-                            forwardPayload: emptySlice()
-                        }.toCell()
-                    }
-                );
-                return ;
+            if (isA) {
+                self.aAmount = amountOfSoldToken;
+                self.bAmount = amountOfBoughtToken;
+            } else {
+                self.aAmount = amountOfBoughtToken;
+                self.bAmount = amountOfSoldToken;
             }
-            if (amountOfBoughtToken < amountOfAJettonToSend) {
-                send(SendParameters{to: sender(),
-                        value: 0,
-                        mode: SendRemainingValue,
-                        bounce: false,
-                        body: TokenTransfer{queryId: 0,
-                            amount: msg.amount,
-                            destination: msg.from,
-                            responseDestination: myAddress(),
-                            customPayload: null,
-                            forwardTonAmount: ton("0.01"),
-                            forwardPayload: emptySlice()
-                        }.toCell()
-                    }
-                );
-                return ;
-            }
-            send(SendParameters{to: jettonAddressA,
+            return ;
+        }
+        let amountOfAJettonToSend: Int =
+            amountOfBoughtToken * self.decimal / amountOfSoldToken * msg.amount / self.decimal;
+        if (amountOfBoughtToken == 0 || amountOfSoldToken == 0) {
+            send(SendParameters{to: sender(),
                     value: 0,
                     bounce: false,
                     mode: SendRemainingValue,
                     body: TokenTransfer{queryId: 0,
-                        amount: amountOfAJettonToSend,
+                        amount: msg.amount,
                         destination: msg.from,
                         responseDestination: myAddress(),
                         customPayload: null,
@@ -127,9 +103,41 @@ contract Task3 with Deployable {
                     }.toCell()
                 }
             );
-            amountOfBoughtToken = amountOfBoughtToken - amountOfAJettonToSend;
-            amountOfSoldToken = amountOfSoldToken + msg.amount;
+            return ;
         }
+        if (amountOfBoughtToken < amountOfAJettonToSend) {
+            send(SendParameters{to: sender(),
+                    value: 0,
+                    mode: SendRemainingValue,
+                    bounce: false,
+                    body: TokenTransfer{queryId: 0,
+                        amount: msg.amount,
+                        destination: msg.from,
+                        responseDestination: myAddress(),
+                        customPayload: null,
+                        forwardTonAmount: ton("0.01"),
+                        forwardPayload: emptySlice()
+                    }.toCell()
+                }
+            );
+            return ;
+        }
+        send(SendParameters{to: jettonAddressA,
+                value: 0,
+                bounce: false,
+                mode: SendRemainingValue,
+                body: TokenTransfer{queryId: 0,
+                    amount: amountOfAJettonToSend,
+                    destination: msg.from,
+                    responseDestination: myAddress(),
+                    customPayload: null,
+                    forwardTonAmount: ton("0.01"),
+                    forwardPayload: emptySlice()
+                }.toCell()
+            }
+        );
+        amountOfBoughtToken = amountOfBoughtToken - amountOfAJettonToSend;
+        amountOfSoldToken = amountOfSoldToken + msg.amount;
         if (isA) {
             self.aAmount = amountOfSoldToken;
             self.bAmount = amountOfBoughtToken;

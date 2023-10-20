@@ -64,11 +64,12 @@ contract Task3 with Deployable {
     }
 
     receive(msg: TokenNotification){
-        require(self.jettonAddressA == sender() || self.jettonAddressB == sender(), "");
+        let isA :Bool = self.jettonAddressA == sender();
+        require(isA || self.jettonAddressB == sender(), "");
         let jettonAddressA: Address = self.jettonAddressA;
         let amountOfBoughtToken: Int = self.aAmount;
         let amountOfSoldToken: Int = self.bAmount;
-        if (sender() == self.jettonAddressA) {
+        if (isA) {
             amountOfBoughtToken = self.bAmount;
             amountOfSoldToken = self.aAmount;
             jettonAddressA = self.jettonAddressB;
@@ -129,7 +130,7 @@ contract Task3 with Deployable {
             amountOfBoughtToken = amountOfBoughtToken - amountOfAJettonToSend;
             amountOfSoldToken = amountOfSoldToken + msg.amount;
         }
-        if (self.jettonAddressA == sender()) {
+        if (isA) {
             self.aAmount = amountOfSoldToken;
             self.bAmount = amountOfBoughtToken;
         } else {
